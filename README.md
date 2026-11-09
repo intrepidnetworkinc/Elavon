@@ -41,3 +41,5 @@ $settings['commerce_elavon_credentials'] = [
   'pin' => 'LIVE_PIN',
 ]; 
 ```
+
+A non-empty value replaces the Account ID, User ID, or PIN saved on the gateway. Do not commit `settings.php` or a real PIN to this repository.
