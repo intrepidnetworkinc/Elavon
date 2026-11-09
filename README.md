@@ -29,3 +29,14 @@ The development site this was written for runs Drupal 10.6.21, PHP 8.3, and Comm
 Copy [commerce_elavon](commerce_elavon) to `modules/custom/commerce_elavon` on the Drupal site. The folder name must stay `commerce_elavon`. Enable **Commerce Elavon** under the **Commerce (custom)** group at Administration, Extend, then clear caches.
 
 For Composer, keep the module in `packages/commerce_elavon` and point the site `composer.json` at that directory as a path repository. The package name is `intrepidnetworkinc/commerce_elavon` version `10.1.0`. Its `replace` entry stops Composer from installing `drupal/commerce_elavon`.
+
+## Credentials in settings.php
+
+Demo credentials can be entered on the payment gateway form. For a live PIN, add this at the bottom of `sites/default/settings.php` so the PIN is not stored in Drupal's exported configuration. Replace the three placeholder values. Clear the Drupal cache after saving the file.
+
+```php
+$settings['commerce_elavon_credentials'] = [
+  'merchant_id' => 'LIVE_ACCOUNT_ID',
+  'user_id' => 'LIVE_USER_ID',
+  'pin' => 'LIVE_PIN',
+];
