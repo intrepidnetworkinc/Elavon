@@ -39,4 +39,5 @@ $settings['commerce_elavon_credentials'] = [
   'merchant_id' => 'LIVE_ACCOUNT_ID',
   'user_id' => 'LIVE_USER_ID',
   'pin' => 'LIVE_PIN',
-];
+]; 
+```
