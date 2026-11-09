@@ -1,0 +1,11 @@
+name: 'Commerce Elavon'
+type: module
+description: 'On-site and off-site Converge (Elavon) payment gateways for Drupal Commerce 3.'
+package: 'Commerce (custom)'
+core_version_requirement: ^10.3 || ^11
+dependencies:
+  - commerce:commerce_payment
+
+# Private development release. Not the drupal.org 8.x-2.4 package.
+version: '10.x-1.0-dev'
+project: 'commerce_elavon'

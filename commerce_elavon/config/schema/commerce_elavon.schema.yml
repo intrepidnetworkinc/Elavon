@@ -1,0 +1,55 @@
+commerce_payment.commerce_payment_gateway.plugin.elavon_onsite:
+  type: commerce_payment_gateway_configuration
+  mapping:
+    merchant_id:
+      type: string
+      label: 'Account ID'
+    user_id:
+      type: string
+      label: 'User ID'
+    pin:
+      type: string
+      label: 'PIN'
+    account_id_field:
+      type: string
+      label: 'Account ID field'
+    multicurrency:
+      type: boolean
+      label: 'Send the order currency'
+    minimum_amount:
+      type: string
+      label: 'Minimum charge'
+    avs_policy:
+      type: string
+      label: 'AVS policy'
+    cvv_policy:
+      type: string
+      label: 'CVV policy'
+
+commerce_payment.commerce_payment_gateway.plugin.elavon_offsite_redirect:
+  type: commerce_payment_gateway_configuration
+  mapping:
+    merchant_id:
+      type: string
+      label: 'Account ID'
+    user_id:
+      type: string
+      label: 'User ID'
+    pin:
+      type: string
+      label: 'PIN'
+    account_id_field:
+      type: string
+      label: 'Account ID field'
+    multicurrency:
+      type: boolean
+      label: 'Send the order currency'
+    minimum_amount:
+      type: string
+      label: 'Minimum charge'
+    avs_policy:
+      type: string
+      label: 'AVS policy'
+    cvv_policy:
+      type: string
+      label: 'CVV policy'

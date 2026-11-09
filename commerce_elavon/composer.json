@@ -1,0 +1,23 @@
+{
+    "name": "intrepidnetworkinc/commerce_elavon",
+    "type": "drupal-custom-module",
+    "description": "Private fork of Commerce Elavon for Drupal Commerce 3. On-site and off-site Converge payments.",
+    "license": "GPL-2.0-or-later",
+    "version": "10.1.0",
+    "replace": {
+        "drupal/commerce_elavon": "*"
+    },
+    "require": {
+        "php": ">=8.1",
+        "ext-dom": "*",
+        "ext-libxml": "*",
+        "ext-simplexml": "*",
+        "drupal/core": "^10.3 || ^11",
+        "drupal/commerce": "^3.3.13"
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-10.x-1.x": "10.x-dev"
+        }
+    }
+}

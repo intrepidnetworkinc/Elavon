@@ -1,0 +1,18 @@
+<?php
+
+/**
+ * @file
+ * Converge payment gateways for Drupal Commerce.
+ */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_help().
+ */
+function commerce_elavon_help($route_name, RouteMatchInterface $route_match) {
+  if ($route_name === 'help.page.commerce_elavon') {
+    return '<p>' . t('Charges cards through Elavon Converge. Configure a payment gateway under Commerce, then set live credentials in settings.php. See the module README.') . '</p>';
+  }
+  return NULL;
+}
