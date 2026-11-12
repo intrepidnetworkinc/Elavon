@@ -26,9 +26,9 @@ final class Endpoints {
    */
   public static function hostedProcess(string $mode): string {
     if ($mode === 'live') {
-      return 'https://api.convergepay.com/VirtualMerchant/process.do';
+      return 'https://api.convergepay.com/hosted-payments/';
     }
-    return 'https://api.demo.convergepay.com/VirtualMerchantDemo/process.do';
+    return 'https://api.demo.convergepay.com/hosted-payments/';
   }
 
   /**

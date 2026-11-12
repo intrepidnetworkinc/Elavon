@@ -103,11 +103,12 @@ trait ConvergeGatewayTrait {
       '#required' => empty($overridden['user_id']),
     ];
     $form['pin'] = [
-      '#type' => 'password',
+      '#type' => 'textfield',
       '#title' => $this->t('PIN'),
-      '#description' => $this->configuration['pin']
-        ? $this->t('A PIN is saved. Leave this blank to keep it. It is not displayed.')
-        : $this->t('Converge terminal PIN. It is not displayed after you save.'),
+      '#description' => empty($overridden['pin'])
+        ? $this->t('Converge terminal PIN. The saved PIN is shown so it can be checked.')
+        : $this->t('The PIN used for transactions comes from settings.php and is not shown here.'),
+      '#default_value' => empty($overridden['pin']) ? $this->configuration['pin'] : '',
       '#required' => $this->configuration['pin'] === '' && empty($overridden['pin']),
     ];
     if ($overridden) {
@@ -423,6 +424,43 @@ trait ConvergeGatewayTrait {
    */
   public function getHostedProcessUrl(): string {
     return Endpoints::hostedProcess($this->getMode());
+  }
+  
+    /**
+   * Drops the HTTP client before Drupal caches the checkout form.
+   *
+   * The client contains closures, which PHP cannot serialize. Checkout fails
+   * on the order information step if this plugin is stored in the form cache.
+   */
+  public function __sleep(): array {
+    $this->apiClient = NULL;
+    $this->convergeLogger = NULL;
+    $this->avsResponses = NULL;
+    $this->settings = NULL;
+    $this->transliteration = NULL;
+    if (property_exists($this, 'moduleHandler')) {
+      $this->moduleHandler = NULL;
+    }
+    return parent::__sleep();
+  }
+
+  /**
+   * Restores the clients removed by __sleep().
+   */
+  public function __wakeup(): void {
+    parent::__wakeup();
+    $container = \Drupal::getContainer();
+    $this->apiClient = new ApiClient(
+      $container->get('http_client'),
+      $container->get('logger.factory')->get('commerce_elavon'),
+    );
+    $this->convergeLogger = $container->get('logger.factory')->get('commerce_elavon');
+    $this->settings = $container->get('settings');
+    $this->avsResponses = AvsResponses::create($container);
+    $this->transliteration = $container->get('transliteration');
+    if (property_exists($this, 'moduleHandler')) {
+      $this->moduleHandler = $container->get('module_handler');
+    }
   }
 
   /**

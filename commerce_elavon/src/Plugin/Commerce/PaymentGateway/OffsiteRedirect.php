@@ -91,8 +91,10 @@ class OffsiteRedirect extends OffsitePaymentGatewayBase implements SupportsRefun
    * {@inheritdoc}
    */
   public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
+    $existing_pin = (string) ($this->configuration['pin'] ?? '');
     parent::submitConfigurationForm($form, $form_state);
     if (!$form_state->getErrors()) {
+      $this->configuration['pin'] = $existing_pin;
       $this->submitConvergeConfigurationForm($form, $form_state);
     }
   }
