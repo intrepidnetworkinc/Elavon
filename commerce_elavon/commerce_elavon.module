@@ -5,6 +5,7 @@
  * Converge payment gateways for Drupal Commerce.
  */
 
+use Drupal\commerce_payment\Entity\PaymentInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 
 /**
@@ -15,4 +16,33 @@ function commerce_elavon_help($route_name, RouteMatchInterface $route_match) {
     return '<p>' . t('Charges cards through Elavon Converge. Configure a payment gateway under Commerce, then set live credentials in settings.php. See the module README.') . '</p>';
   }
   return NULL;
+}
+
+/**
+ * Implements hook_commerce_payment_insert().
+ */
+function commerce_elavon_commerce_payment_insert(PaymentInterface $payment) {
+  _commerce_elavon_update_order_balance($payment);
+}
+
+/**
+ * Implements hook_commerce_payment_update().
+ */
+function commerce_elavon_commerce_payment_update(PaymentInterface $payment) {
+  _commerce_elavon_update_order_balance($payment);
+}
+
+/**
+ * Applies a Converge payment to the order before the page is sent.
+ */
+function _commerce_elavon_update_order_balance(PaymentInterface $payment) {
+  $gateway = $payment->getPaymentGateway();
+  if (!$gateway || !in_array($gateway->getPluginId(), ['elavon_onsite', 'elavon_offsite_redirect'], TRUE)) {
+    return;
+  }
+  $order = $payment->getOrder();
+  if (!$order) {
+    return;
+  }
+  \Drupal::service('commerce_payment.order_updater')->updateOrder($order, TRUE);
 }

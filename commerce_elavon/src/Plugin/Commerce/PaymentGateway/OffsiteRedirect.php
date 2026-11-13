@@ -113,12 +113,46 @@ class OffsiteRedirect extends OffsitePaymentGatewayBase implements SupportsRefun
       'ssl_amount' => Amounts::format($amount->getNumber()),
       'ssl_show_form' => 'true',
       'ssl_card_present' => 'N',
-      'ssl_receipt_link_method' => 'REDG',
+      'ssl_receipt_link_method' => 'REDP',
       'ssl_receipt_link_url' => $return_url,
       'ssl_receipt_decl_get_url' => $cancel_url,
       'ssl_invoice_number' => $order ? (string) $order->id() : '',
     ];
+    $profile = $order ? $order->getBillingProfile() : NULL;
+    if ($profile && !$profile->get('address')->isEmpty()) {
+      $address = $profile->get('address')->first();
+      $countries = ['US' => 'USA', 'CA' => 'CAN'];
+      $country = strtoupper((string) $address->getCountryCode());
+      $values = [
+        'ssl_first_name' => $this->transliterateValue((string) $address->getGivenName()),
+        'ssl_last_name' => $this->transliterateValue((string) $address->getFamilyName()),
+        'ssl_company' => $this->transliterateValue((string) $address->getOrganization()),
+        'ssl_avs_address' => $this->transliterateValue((string) $address->getAddressLine1()),
+        'ssl_address2' => $this->transliterateValue((string) $address->getAddressLine2()),
+        'ssl_city' => $this->transliterateValue((string) $address->getLocality()),
+        'ssl_state' => (string) $address->getAdministrativeArea(),
+        'ssl_avs_zip' => preg_replace('/[^[:alnum:]]/', '', (string) $address->getPostalCode()),
+        'ssl_country' => $countries[$country] ?? $country,
+      ];
+      foreach ($values as $key => $value) {
+        $value = trim((string) $value);
+        if ($value !== '') {
+          $fields[$key] = substr($value, 0, $key === 'ssl_avs_zip' ? 9 : 30);
+        }
+      }
+    }
+    if ($order && $order->getEmail()) {
+      $fields['ssl_email'] = substr($order->getEmail(), 0, 100);
+    }
     $fields = $this->addCurrencyField($fields, $amount);
+    $request = \Drupal::request();
+    $ip = (string) $request->headers->get('CF-Connecting-IP');
+    if (!filter_var($ip, FILTER_VALIDATE_IP)) {
+      $ip = (string) $request->getClientIp();
+    }
+    if (filter_var($ip, FILTER_VALIDATE_IP)) {
+      $fields['ssl_cardholder_ip'] = $ip;
+    }
     return $this->apiClient->requestSessionToken($this->getMode(), $this->getConvergeCredentials(), $fields);
   }
 
@@ -248,6 +282,76 @@ class OffsiteRedirect extends OffsitePaymentGatewayBase implements SupportsRefun
     $payment->save();
   }
 
+  /**
+   * Finds the Drupal order for a hosted sale when the redirect omits it.
+   *
+   * @throws \Drupal\commerce_payment\Exception\PaymentGatewayException
+   *   When the transaction cannot be loaded or was not approved.
+   */
+  public function findOrderIdForHostedReturn(string $txn_id, ?string $fallback_amount = NULL, ?string $fallback_email = NULL): ?string {
+    $now = $this->time->getRequestTime();
+    $result = $this->postApproved([
+      'ssl_transaction_type' => 'txnquery',
+      'ssl_txn_id' => $txn_id,
+      'ssl_search_start_date' => date('m/d/Y', $now - (3 * 86400)),
+      'ssl_search_end_date' => date('m/d/Y', $now + 86400),
+    ]);
+    $invoice = (string) $result->invoiceNumber();
+    if (preg_match('/^[0-9]{1,10}$/', $invoice)) {
+      return $invoice;
+    }
+
+    $amount = $result->amount() ?: $fallback_amount;
+    $email = strtolower(trim((string) ($result->email() ?: $fallback_email)));
+    if ($amount === NULL || $amount === '') {
+      $this->convergeLogger->warning('Hosted transaction @txn had no amount to match.', [
+        '@txn' => $txn_id,
+      ]);
+      return NULL;
+    }
+    $gateway_id = $this->parentEntity->id();
+    $storage = $this->entityTypeManager->getStorage('commerce_order');
+    $ids = $storage->getQuery()
+      ->condition('state', 'draft')
+      ->accessCheck(FALSE)
+      ->sort('changed', 'DESC')
+      ->range(0, 20)
+      ->execute();
+    $matches = [];
+    foreach ($storage->loadMultiple($ids) as $order) {
+      $total = $order->getTotalPrice();
+      if (!$total || !Amounts::equals($total->getNumber(), $amount)) {
+        continue;
+      }
+    if ($email !== '' && strtolower((string) $order->getEmail()) !== $email) {
+        continue;
+      }
+      $gateway = $order->get('payment_gateway')->target_id ?? '';
+      if ($gateway !== '' && $gateway !== $gateway_id) {
+        continue;
+      }
+      $matches[] = $order;
+    }
+    if ($matches === []) {
+      $this->convergeLogger->warning('Hosted transaction @txn matched no draft order for @amount @email.', [
+        '@txn' => $txn_id,
+        '@amount' => $amount,
+        '@email' => $email !== '' ? $email : 'none',
+      ]);
+      return NULL;
+    }
+    usort($matches, static function ($a, $b) {
+      return $b->getChangedTime() <=> $a->getChangedTime();
+    });
+    $chosen = (string) $matches[0]->id();
+    $this->convergeLogger->info('Hosted transaction @txn matched draft order @order (@count candidates).', [
+      '@txn' => $txn_id,
+      '@order' => $chosen,
+      '@count' => count($matches),
+    ]);
+    return $chosen;
+  }
+  
   /**
    * {@inheritdoc}
    */

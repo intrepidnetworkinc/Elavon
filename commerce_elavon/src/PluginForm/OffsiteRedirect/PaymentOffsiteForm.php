@@ -27,8 +27,10 @@ class PaymentOffsiteForm extends BasePaymentOffsiteForm {
 
     $order = $payment->getOrder();
     $token = $plugin->createHostedSession($payment, $form['#return_url'], $form['#cancel_url']);
+    $invoice = $order ? ($order->getOrderNumber() ?: (string) $order->id()) : '';
     $data = $plugin->alterOffsiteBrowserData([
       'ssl_txn_auth_token' => $token,
+      'ssl_invoice_number' => $invoice,
     ], $order);
 
     return $this->buildRedirectForm($form, $form_state, $plugin->getHostedProcessUrl(), $data, 'post');

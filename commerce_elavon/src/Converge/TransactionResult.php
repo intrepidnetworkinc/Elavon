@@ -33,6 +33,7 @@ final class TransactionResult {
     private readonly ?string $tokenResponse,
     private readonly ?string $transactionType,
     private readonly ?string $errorCode,
+    private readonly ?string $email,
   ) {}
 
   /**
@@ -68,7 +69,7 @@ final class TransactionResult {
     $error_code = self::text($txn, 'errorCode');
     $error_message = self::text($txn, 'errorMessage');
     $approved = $error_code === ''
-      && $result_code === '0'
+      && ($result_code === '0' || ($result_code === '' && $message !== ''))
       && in_array(strtoupper($message), self::SUCCESS_MESSAGES, TRUE);
 
     return new self(
@@ -85,6 +86,7 @@ final class TransactionResult {
       self::nullable($txn, 'ssl_token_response'),
       self::nullable($txn, 'ssl_transaction_type'),
       $error_code !== '' ? $error_code : NULL,
+      self::nullable($txn, 'ssl_email'),
     );
   }
 
@@ -170,6 +172,13 @@ final class TransactionResult {
    */
   public function transactionType(): ?string {
     return $this->transactionType;
+  }
+
+  /**
+   * The ssl_email value, when present.
+   */
+  public function email(): ?string {
+    return $this->email;
   }
 
   /**
