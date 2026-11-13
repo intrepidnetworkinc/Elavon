@@ -8,4 +8,4 @@ dependencies:
 
 # Private development release. Not the drupal.org 8.x-2.4 package.
 version: '10.x-1.0-dev'
-project: 'commerce_elavon'
+# project: 'commerce_elavon'

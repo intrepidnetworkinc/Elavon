@@ -19,6 +19,13 @@ function commerce_elavon_help($route_name, RouteMatchInterface $route_match) {
 }
 
 /**
+ * Implements hook_update_projects_alter().
+ */
+function commerce_elavon_update_projects_alter(array &$projects) {
+  unset($projects['commerce_elavon']);
+}
+
+/**
  * Implements hook_commerce_payment_insert().
  */
 function commerce_elavon_commerce_payment_insert(PaymentInterface $payment) {
